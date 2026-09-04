@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RemediCare | Clinical Protocol Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --apollo-blue: #004b87;
+            --apollo-sky: #00a6e6;
+            --apollo-orange: #f37021;
+        }
+
+        body { font-family: 'Public Sans', sans-serif; background-color: #f4f7f9; color: #1e293b; }
+
+        .navbar { background: white; border-bottom: 2px solid var(--apollo-blue); }
+        .navbar-brand { font-weight: 800; color: var(--apollo-blue) !important; }
+
+        .protocol-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 75, 135, 0.05);
+            margin-top: 30px;
+            margin-bottom: 50px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .protocol-header {
+            background: #eff6ff;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border-left: 8px solid var(--apollo-blue);
+        }
+
+        .remedy-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+        .remedy-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); border-color: var(--apollo-sky); }
+
+        .card-header-apollo {
+            background: var(--apollo-blue);
+            color: white;
+            padding: 20px 30px;
+            font-weight: 800;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .protocol-section {
+            padding: 25px 30px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .protocol-section:last-child { border-bottom: none; }
+        .section-label { font-weight: 800; font-size: 0.75rem; color: #64748b; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px; display: block; }
+
+        .dosage-badge {
+            background: #fff7ed; color: #9a3412; border: 1px solid #ffedd5;
+            padding: 8px 20px; border-radius: 50px; font-weight: 700; display: inline-flex; align-items: center; gap: 10px;
+        }
+
+        .step-pill {
+            background: #f1f5f9; border-radius: 10px; padding: 12px 20px; margin-bottom: 10px; display: flex; gap: 15px;
+        }
+        .step-icon { color: var(--apollo-sky); font-weight: 800; }
+
+        .ing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .ing-chip { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 15px; border-radius: 12px; display: flex; align-items: center; gap: 10px; }
+
+        .btn-action {
+            background: var(--apollo-blue); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 700; transition: 0.3s;
+        }
+        .btn-action:hover { background: #003661; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    </style>
+  </head>
+  <body>
+
+    <nav class="navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard"><i class="bi bi-shield-plus"></i> RemediCare</a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                
+                <!-- Reliable Clinical Language Selector -->
+                <div class="clinical-lang-wrapper d-flex align-items-center bg-white rounded-pill px-3 py-1 border shadow-sm">
+                    <i class="bi bi-translate text-primary me-2"></i>
+                    <div id="google_translate_element"></div>
+                </div>
+
+                <button class="btn btn-outline-secondary btn-sm rounded-pill px-4 d-none d-md-block" onclick="window.print()"><i class="bi bi-printer"></i> Download PDF</button>
+                <a href="/dashboard" class="btn btn-primary btn-sm rounded-pill px-4">Portal Home</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="protocol-container">
+            {% if clinic %}
+            <div class="alert alert-danger border-0 p-4 mb-4 shadow-sm" style="background: #fff1f2; border-left: 8px solid #dc2626 !important; border-radius: 20px;">
+                <div class="row align-items-center">
+                    <div class="col-md-1 text-center">
+                        <i class="bi bi-exclamation-triangle-fill text-danger display-4 animate-pulse"></i>
+                    </div>
+                    <div class="col-md-8 ps-md-4">
+                        <h4 class="fw-bold text-danger mb-1">EMERGENCY CLINICAL ALERT</h4>
+                        <p class="text-dark fw-bold mb-2">High Risk Detected. Immediate medical consultation is advised.</p>
+                        <div class="d-flex flex-wrap gap-4 mt-2">
+                            <div class="small"><i class="bi bi-hospital text-danger me-2"></i><strong>Facility:</strong> {{ clinic['clinic_name'] }}</div>
+                            <div class="small"><i class="bi bi-geo-alt-fill text-danger me-2"></i><strong>Location:</strong> {{ clinic['address'] }}</div>
+                            <div class="small"><i class="bi bi-telephone-fill text-danger me-2"></i><strong>Contact:</strong> {{ clinic['phone'] }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-md-end mt-4 mt-md-0">
+                        <a href="tel:{{ clinic['phone'] }}" class="btn btn-danger w-100 rounded-pill py-3 fw-bold">CALL EMERGENCY</a>
+                    </div>
+                </div>
+            </div>
+            <style>
+                @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+                .animate-pulse { animation: pulse-red 1.5s infinite; }
+            </style>
+            {% endif %}
+
+            <div class="protocol-header">
+                <div class="row align-items-center">
+                    <div class="col-md-9">
+                        <span class="text-primary fw-bold small mb-2 d-block">CERTIFIED REMEDIAL PROTOCOL // GEN-{{ range(100, 999)|random }}</span>
+                        <h1 class="display-4 fw-bold mb-2">{{ disease }}</h1>
+                        <p class="text-muted m-0 fs-5">{{ description }}</p>
+                    </div>
+                    <div class="col-md-3 text-md-end mt-4 mt-md-0">
+                        <div class="h5 fw-bold text-primary">Severity Index</div>
+                        <div class="display-5 fw-bold" style="color: {% if severity > 7 %}#dc2626{% elif severity > 4 %}#f59e0b{% else %}#059669{% endif %};">{{ severity }}/10</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <h5 class="fw-bold mb-4 text-primary" style="letter-spacing: 1px;"><i class="bi bi-clipboard2-pulse"></i> DETAILED TREATMENT PLAN</h5>
+                    
+                    {% for r in remedies %}
+                    <div class="remedy-card">
+                        <div class="card-header-apollo">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge bg-white text-primary rounded-pill px-3 py-1 fw-bold small" style="font-size: 0.7rem;">
+                                    <i class="bi bi-capsule"></i> {{ r['remedy_form'] }}
+                                </span>
+                                <span>REMEDY: {{ r['remedy_name'] }}</span>
+                            </div>
+                            <i class="bi bi-patch-check-fill"></i>
+                        </div>
+                        
+                        <div class="protocol-section">
+                            <span class="section-label">Bio-Active Ingredients</span>
+                            <div class="ing-grid">
+                                {% for ing in r['ingredients'] %}
+                                <div class="ing-chip">
+                                    <i class="bi bi-droplet-fill text-info"></i>
+                                    <div>
+                                        <div class="fw-bold small">{{ ing['ingredient_name'] }}</div>
+                                        <div class="text-muted small" style="font-size: 0.7rem;">{{ ing['advantages'] }}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="protocol-section">
+                            <div class="row">
+                                <div class="col-md-4 border-end">
+                                    <span class="section-label">Preparation Method</span>
+                                    <p class="text-muted small pe-3">{{ r['description'] }}</p>
+                                </div>
+                                <div class="col-md-4 border-end ps-md-4 mt-4 mt-md-0">
+                                    <span class="section-label">Dosage & Administration</span>
+                                    <div class="dosage-badge mb-3">
+                                        <i class="bi bi-clock-history"></i> Dosage: {{ r['dosage'] }}
+                                    </div>
+                                    <div class="mt-2">
+                                        <span class="section-label" style="font-size: 0.65rem;">Consumption Instructions</span>
+                                        <p class="text-dark fw-bold small m-0"><i class="bi bi-info-circle text-primary me-2"></i> {{ r['consumption_steps'] }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 ps-md-4 mt-4 mt-md-0">
+                                    <div class="p-3 rounded-4" style="background: #f5f3ff; border: 1px solid #ddd6fe;">
+                                        <span class="section-label" style="color: #6d28d9;">Holistic Physical Therapy</span>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="h3 m-0 text-primary"><i class="bi bi-activity"></i></div>
+                                            <div>
+                                                <div class="fw-bold" style="color: #4c1d95;">{{ r['yoga_exercise'] }}</div>
+                                                <div class="text-muted small">Daily Practice Protocol</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3 p-3 rounded-4" style="background: #fffbeb; border: 1px solid #fde68a;">
+                                        <span class="section-label" style="color: #92400e;">Analyzed Precautions</span>
+                                        <p class="small m-0 text-dark" style="font-weight: 600;">
+                                            <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> {{ r['precautions'] }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <hr class="mb-5">
+                <p class="text-muted small mb-4">This protocol is valid for 14 doses. Ensure proper hydration and consult a practitioner if symptoms persist.</p>
+                
+                {% if remedies %}
+                <button class="btn-action shadow" onclick="window.location.href='/start_treatment/{{ disease }}?remedy={{ remedies[0]['remedy_name'] }}'">
+                    <i class="bi bi-clock-history me-2"></i> Initialize Active Treatment Schedule
+                </button>
+                {% else %}
+                <button class="btn-action shadow" onclick="window.location.href='/dashboard'">Return to Portal</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-5">
+        <p class="text-muted small">© 2026 RemediCare Clinical Intelligence Systems. Designed for DBMS Final Project.</p>
+    </footer>
+
+    <!-- Multilingual Engine Script -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en', 
+                includedLanguages: 'en,hi,mr,te,ta,bn', 
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <style>
+        /* Pro-Clinical Language Styling */
+        .goog-te-gadget-simple {
+            background-color: transparent !important;
+            border: none !important;
+            font-size: 0.85rem !important;
+            font-family: 'Public Sans', sans-serif !important;
+            font-weight: 700 !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        .goog-te-gadget-simple img { display: none !important; }
+        .goog-te-gadget-simple span { color: var(--apollo-blue) !important; }
+        .goog-te-banner-frame.skiptranslate { display: none !important; }
+        body { top: 0px !important; }
+        .goog-te-menu-value span { color: var(--apollo-blue) !important; }
+        .goog-te-menu-value img { display: none !important; }
+        .goog-te-menu-value i { display: none !important; }
+        .goog-te-menu-value::after { content: '\F229'; font-family: 'bootstrap-icons'; margin-left: 8px; font-size: 0.7rem; }
+    </style>
+
+  </body>
+</html>

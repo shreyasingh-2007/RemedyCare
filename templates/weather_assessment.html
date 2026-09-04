@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RemediCare | Environmental Health Intelligence</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --apollo-blue: #004b87;
+            --apollo-sky: #00a6e6;
+            --apollo-orange: #f37021;
+        }
+
+        body { font-family: 'Public Sans', sans-serif; background-color: #f0f4f8; color: #1e293b; overflow-x: hidden; }
+
+        .weather-hero {
+            background: linear-gradient(135deg, #004b87 0%, #00a6e6 100%);
+            padding: 60px 0; color: white; border-radius: 0 0 50px 50px;
+            margin-bottom: 40px; box-shadow: 0 10px 30px rgba(0, 75, 135, 0.2);
+        }
+
+        .weather-card {
+            background: white; border-radius: 30px; padding: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;
+            transition: 0.3s;
+        }
+
+        .weather-selector { display: flex; gap: 20px; justify-content: center; margin-bottom: 40px; }
+        .weather-node {
+            width: 120px; padding: 20px; background: white; border: 2px solid #e2e8f0;
+            border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s;
+        }
+        .weather-node:hover { transform: translateY(-5px); border-color: var(--apollo-sky); }
+        .weather-node.active { background: var(--apollo-blue); color: white; border-color: var(--apollo-blue); box-shadow: 0 10px 25px rgba(0, 75, 135, 0.2); }
+        .weather-node i { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+
+        .risk-badge {
+            background: #fff1f2; color: #e11d48; padding: 5px 15px; border-radius: 50px;
+            font-weight: 800; font-size: 0.8rem; border: 1px solid #fecaca;
+        }
+
+        .alert-banner {
+            background: #fff7ed; border-left: 8px solid #f97316; padding: 25px;
+            border-radius: 20px; margin-bottom: 30px; display: flex; align-items: center; gap: 20px;
+        }
+
+        .food-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .food-box { padding: 25px; border-radius: 20px; }
+        .food-box.safe { background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .food-box.danger { background: #fff1f2; border: 1px solid #fecaca; }
+
+        .prevention-pill {
+            background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 20px;
+            border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px;
+            font-weight: 600;
+        }
+        .prevention-pill i { color: #22c55e; }
+
+        .chart-container { height: 300px; margin-top: 30px; }
+    </style>
+  </head>
+  <body>
+
+    <nav class="navbar py-3 bg-white border-bottom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="/dashboard"><i class="bi bi-shield-plus"></i> RemediCare</a>
+            <a href="/dashboard" class="btn btn-outline-primary rounded-pill px-4">Back to Portal</a>
+        </div>
+    </nav>
+
+    <div class="weather-hero text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold">Environmental Intelligence</h1>
+            <p class="fs-5 opacity-75">Predictive health analysis based on real-time atmospheric markers.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Weather Selector -->
+        <div class="weather-selector">
+            <div class="weather-node active" onclick="analyzeWeather('Sunny', this)">
+                <i class="bi bi-sun-fill text-warning"></i>
+                <div class="fw-bold">Sunny</div>
+            </div>
+            <div class="weather-node" onclick="analyzeWeather('Rainy', this)">
+                <i class="bi bi-cloud-rain-fill text-info"></i>
+                <div class="fw-bold">Rainy</div>
+            </div>
+            <div class="weather-node" onclick="analyzeWeather('Cold', this)">
+                <i class="bi bi-snow text-primary"></i>
+                <div class="fw-bold">Cold</div>
+            </div>
+            <div class="weather-node" onclick="analyzeWeather('Humid', this)">
+                <i class="bi bi-cloud-haze2-fill text-secondary"></i>
+                <div class="fw-bold">Humid</div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Risk & Alerts -->
+            <div class="col-lg-7">
+                <div id="weather-alert" class="alert-banner">
+                    <i class="bi bi-broadcast-pin text-warning fs-1"></i>
+                    <div>
+                        <h5 class="fw-bold mb-1">LIVE HEALTH ALERT</h5>
+                        <p class="m-0" id="alert-text">Detecting stable UV markers. Low immediate environmental risk.</p>
+                    </div>
+                </div>
+
+                <div class="weather-card mb-4">
+                    <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-graph-up-arrow"></i> Disease Risk Prediction</h5>
+                    <div id="risk-list">
+                        <!-- Risk Items -->
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded-4">
+                            <span class="fw-bold">Heat Stroke</span>
+                            <span class="risk-badge">15% Risk</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="weather-card">
+                    <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-shield-check"></i> Prevention Protocol</h5>
+                    <div id="prevention-list">
+                        <!-- Prevention Pills -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Food & Graph -->
+            <div class="col-lg-5">
+                <div class="weather-card mb-4">
+                    <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-egg-fried"></i> Nutritional Matrix</h5>
+                    <div class="food-grid">
+                        <div class="food-box safe">
+                            <div class="fw-bold text-success mb-3"><i class="bi bi-check-circle-fill"></i> RECOMMENDED</div>
+                            <ul class="list-unstyled small" id="food-safe">
+                                <!-- List items -->
+                            </ul>
+                        </div>
+                        <div class="food-box danger">
+                            <div class="fw-bold text-danger mb-3"><i class="bi bi-x-circle-fill"></i> AVOID</div>
+                            <ul class="list-unstyled small" id="food-danger">
+                                <!-- List items -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="weather-card">
+                    <h5 class="fw-bold mb-2 text-primary"><i class="bi bi-calendar-week"></i> Weekly Health Risk Trend</h5>
+                    <div class="chart-container">
+                        <canvas id="healthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-5 text-center mt-5">
+        <p class="text-muted small">© 2026 RemediCare Environmental Intelligence Labs.</p>
+    </footer>
+
+    <script>
+        const weatherData = {
+            'Sunny': {
+                alert: "☀️ High UV Index detected. Maintain hydration and skin protection.",
+                risks: [["Dehydration", "85%"], ["Heat Exhaustion", "60%"], ["Skin Burn", "45%"]],
+                prevention: ["Drink 4L water daily", "Use high-SPF sunscreen", "Wear breathable cotton", "Avoid peak sun (12-4 PM)"],
+                safe: ["Watermelon", "Buttermilk", "Coconut Water", "Cucumber"],
+                danger: ["Excessive Caffeine", "Spicy Pickles", "Red Meat", "Deep Fried Snacks"],
+                chart: [10, 15, 12, 20, 25, 22, 15]
+            },
+            'Rainy': {
+                alert: "🌧️ High moisture detected. Risk of water-borne diseases and mosquito breeding.",
+                risks: [["Dengue", "92%"], ["Viral Fever", "85%"], ["Typhoid", "70%"]],
+                prevention: ["Use mosquito nets", "Drink only boiled water", "Avoid stagnant water", "Dry clothes properly"],
+                safe: ["Ginger Tea", "Hot Soup", "Turmeric Milk", "Steamed Veggies"],
+                danger: ["Raw Salads", "Ice Cream", "Street Food", "Cold Juice"],
+                chart: [40, 55, 60, 75, 92, 85, 70]
+            },
+            'Cold': {
+                alert: "❄️ Drop in temperature detected. Higher chances of respiratory congestion.",
+                risks: [["Common Cold", "95%"], ["Joint Pain", "80%"], ["Bronchitis", "65%"]],
+                prevention: ["Keep chest covered", "Steam inhalation daily", "Exercise indoors", "Warm oil massage"],
+                safe: ["Honey & Tulsi", "Nuts & Dates", "Ghee", "Warm Stews"],
+                danger: ["Curd at night", "Cold Water", "Banana", "Ice cream"],
+                chart: [30, 45, 65, 80, 95, 90, 85]
+            },
+            'Humid': {
+                alert: "🔴 High humidity detected. Higher chances of skin allergy and fungal infections.",
+                risks: [["Skin Allergy", "88%"], ["Fungal Infection", "82%"], ["Lethargy", "75%"]],
+                prevention: ["Take two showers daily", "Use anti-fungal powder", "Keep body dry", "Change clothes often"],
+                safe: ["Lemon Water", "Mung Dal", "Bitter Gourd", "Pomegranate"],
+                danger: ["Salty food", "Fermented food", "Heavy sweets", "Oily fryups"],
+                chart: [20, 35, 50, 70, 88, 80, 75]
+            }
+        };
+
+        let myChart;
+
+        function analyzeWeather(type, element) {
+            // Update Active Node
+            document.querySelectorAll('.weather-node').forEach(n => n.classList.remove('active'));
+            element.classList.add('active');
+
+            const data = weatherData[type];
+
+            // Update Alert
+            document.getElementById('alert-text').innerText = data.alert;
+
+            // Update Risks
+            const riskList = document.getElementById('risk-list');
+            riskList.innerHTML = '';
+            data.risks.forEach(r => {
+                riskList.innerHTML += `
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded-4">
+                        <span class="fw-bold">${r[0]}</span>
+                        <span class="risk-badge">${r[1]} Risk</span>
+                    </div>
+                `;
+            });
+
+            // Update Prevention
+            const prevList = document.getElementById('prevention-list');
+            prevList.innerHTML = '';
+            data.prevention.forEach(p => {
+                prevList.innerHTML += `<div class="prevention-pill"><i class="bi bi-check-circle-fill"></i> ${p}</div>`;
+            });
+
+            // Update Food
+            document.getElementById('food-safe').innerHTML = data.safe.map(f => `<li>• ${f}</li>`).join('');
+            document.getElementById('food-danger').innerHTML = data.danger.map(f => `<li>• ${f}</li>`).join('');
+
+            // Update Chart
+            updateChart(data.chart);
+        }
+
+        function updateChart(points) {
+            const ctx = document.getElementById('healthChart').getContext('2d');
+            if (myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Clinical Risk Score',
+                        data: points,
+                        borderColor: '#00a6e6',
+                        backgroundColor: 'rgba(0, 166, 230, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#004b87'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Initialize with Sunny
+        analyzeWeather('Sunny', document.querySelector('.weather-node'));
+    </script>
+  </body>
+</html>

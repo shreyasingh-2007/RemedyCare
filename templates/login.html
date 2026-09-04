@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RemediCare | Patient Access</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --apollo-blue: #004b87;
+            --apollo-sky: #00a6e6;
+            --apollo-orange: #f37021;
+        }
+
+        body { font-family: 'Public Sans', sans-serif; background-color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+        .auth-card {
+            background: white;
+            padding: 50px;
+            border-radius: 30px;
+            box-shadow: 0 15px 40px rgba(0, 75, 135, 0.08);
+            width: 100%;
+            max-width: 480px;
+            border-top: 6px solid var(--apollo-blue);
+        }
+
+        .brand-logo { color: var(--apollo-blue); font-weight: 800; font-size: 2.2rem; text-align: center; margin-bottom: 30px; }
+
+        .form-label { font-weight: 700; color: #64748b; font-size: 0.8rem; }
+        .form-control { padding: 15px; border-radius: 12px; border: 2px solid #f1f5f9; transition: 0.3s; }
+        .form-control:focus { border-color: var(--apollo-sky); box-shadow: none; }
+
+        .btn-apollo {
+            background: var(--apollo-blue); color: white; border: none; padding: 16px; border-radius: 12px;
+            font-weight: 700; width: 100%; margin-top: 25px; transition: 0.3s;
+        }
+        .btn-apollo:hover { background: #003661; transform: translateY(-2px); }
+
+        .auth-footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 0.9rem; }
+        .auth-footer a { color: var(--apollo-orange); font-weight: 700; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div class="auth-card">
+        <div class="brand-logo"><i class="bi bi-plus-square-fill"></i> RemediCare</div>
+        <h4 class="fw-bold mb-4 text-center">Patient Login</h4>
+        
+        {% if message %}
+        <div class="alert alert-danger border-0 small text-center mb-4" style="background: #fff1f2; color: #e11d48;">{{ message }}</div>
+        {% endif %}
+
+        <form action="/login" method="POST">
+            <div class="mb-4">
+                <label class="form-label">EMAIL ADDRESS</label>
+                <input type="email" name="email" class="form-control" placeholder="patient@ayurgenix.com" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">PASSWORD</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-apollo shadow-sm">LOGIN TO PORTAL</button>
+        </form>
+
+        <div class="auth-footer">
+            New Patient? <a href="/register">Register Profile</a>
+        </div>
+    </div>
+  </body>
+</html>

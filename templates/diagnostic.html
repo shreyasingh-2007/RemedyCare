@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RemediCare | Clinical Bio-Neural Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --apollo-blue: #004b87;
+            --apollo-sky: #00a6e6;
+            --apollo-orange: #f37021;
+            --risk-low: #059669;
+            --risk-med: #d97706;
+            --risk-high: #dc2626;
+        }
+
+        body { font-family: 'Public Sans', sans-serif; background-color: #f8fafc; color: #1e293b; overflow-x: hidden; transition: 0.8s; }
+
+        /* Atmospheric Shaders */
+        #atm-layer { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 9999; opacity: 0.3; }
+        .rain-mist { background: repeating-linear-gradient(transparent, rgba(0, 166, 230, 0.05) 2%, transparent 4%); animation: rain 0.2s linear infinite; }
+        @keyframes rain { from { background-position: 0 0; } to { background-position: 0 100px; } }
+        .sun-flare { background: radial-gradient(circle at 80% 20%, rgba(243, 112, 33, 0.2) 0%, transparent 40%); }
+        .frost-overlay { backdrop-filter: contrast(1.1) brightness(1.1) saturate(0.8); }
+
+        .navbar { background: white; border-bottom: 2px solid var(--apollo-blue); }
+        .navbar-brand { font-weight: 800; color: var(--apollo-blue) !important; }
+
+        .clinical-panel {
+            background: white; border-radius: 25px; border: 1px solid #e2e8f0; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+            margin-bottom: 30px; position: relative;
+        }
+
+        /* 3D Holographic Scanner */
+        .scanner-viewport { perspective: 1200px; height: 500px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .human-hologram { height: 100%; transition: 0.1s ease-out; transform-style: preserve-3d; filter: drop-shadow(0 0 20px rgba(0, 166, 230, 0.1)); }
+        .scan-laser { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--apollo-sky), transparent);
+            box-shadow: 0 0 15px var(--apollo-sky); animation: scanMove 3s ease-in-out infinite; pointer-events: none;
+        }
+        @keyframes scanMove { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+
+        .hotspot { fill: rgba(241, 245, 249, 0.4); stroke: #cbd5e1; stroke-width: 1; cursor: pointer; transition: 0.3s; }
+        .hotspot:hover { fill: rgba(0, 166, 230, 0.1); stroke: var(--apollo-sky); }
+        .hotspot.active { 
+            fill: #ef4444 !important; 
+            stroke: #dc2626 !important; 
+            stroke-width: 2.5; 
+            filter: drop-shadow(0 0 15px rgba(220, 38, 38, 0.8)) url(#chromeEffect);
+            animation: neuralPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes neuralPulse {
+            0% { filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.6)) url(#chromeEffect); }
+            50% { filter: drop-shadow(0 0 25px rgba(220, 38, 38, 1)) url(#chromeEffect); transform: scale(1.01); }
+            100% { filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.6)) url(#chromeEffect); }
+        }
+
+        .scan-tooltip {
+            position: absolute; background: var(--apollo-blue); color: white; padding: 5px 15px;
+            border-radius: 50px; font-weight: 800; font-size: 0.75rem; pointer-events: none;
+            opacity: 0; transition: 0.2s; z-index: 100; white-space: nowrap;
+        }
+
+        /* Weather UI */
+        .weather-bar { display: flex; gap: 15px; margin-bottom: 40px; }
+        .weather-node {
+            flex: 1; text-align: center; padding: 25px; border-radius: 20px; cursor: pointer; transition: 0.3s;
+            background: #fff; border: 2px solid #f1f5f9;
+        }
+        .weather-node.active { background: var(--apollo-blue); color: white; border-color: var(--apollo-blue); box-shadow: 0 10px 30px rgba(0, 75, 135, 0.2); }
+
+        /* Advisor UI */
+        .advisor-box { border-radius: 20px; padding: 30px; margin-top: 30px; transition: 0.5s; border: 2px solid transparent; }
+        .risk-label { font-weight: 800; font-size: 1.1rem; margin-bottom: 10px; display: block; }
+
+        .btn-apollo {
+            background: var(--apollo-blue); color: white; border: none; padding: 18px 50px; border-radius: 15px; font-weight: 800; transition: 0.3s;
+        }
+        .btn-apollo:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0, 75, 135, 0.2); }
+
+        .phase { display: none; }
+        .phase.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .matrix-chip {
+            background: white; border: 2px solid #e2e8f0; padding: 12px 20px; border-radius: 15px; margin: 6px;
+            display: inline-block; cursor: pointer; font-weight: 700; transition: 0.2s; font-size: 0.9rem;
+        }
+        .matrix-chip.active { background: var(--apollo-blue); color: white; border-color: var(--apollo-blue); }
+
+        .range-slider { -webkit-appearance: none; width: 100%; height: 10px; border-radius: 10px; background: #e2e8f0; outline: none; }
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; background: white; cursor: pointer; border: 5px solid var(--apollo-blue);
+        }
+
+        /* Biometric Gauge Styling */
+        .gauge-container { position: relative; width: 220px; height: 220px; }
+        .gauge-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        .gauge-bg { fill: none; stroke: #f1f5f9; stroke-width: 8; }
+        .gauge-fill { 
+            fill: none; stroke: var(--risk-low); stroke-width: 8; stroke-dasharray: 283; 
+            stroke-dashoffset: 141; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            stroke-linecap: round;
+        }
+        .gauge-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        /* Biometric Wave Background */
+        .biometric-wave {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 120%, rgba(0, 166, 230, 0.05) 0%, transparent 70%);
+            z-index: 0; pointer-events: none; opacity: 0.5;
+            animation: wavePulse 4s ease-in-out infinite;
+        }
+        @keyframes wavePulse { 0%, 100% { opacity: 0.3; transform: scaleY(1); } 50% { opacity: 0.6; transform: scaleY(1.1); } }
+
+        .stat-glass { 
+            background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); z-index: 1; position: relative; 
+            transition: 0.1s ease-out; transform-style: preserve-3d;
+        }
+
+        /* Neural Hum Waveform */
+        .neural-hum {
+            position: absolute; bottom: 100px; left: 0; width: 100%; height: 60px;
+            opacity: 0.2; pointer-events: none; z-index: 0;
+        }
+
+        .emergency-glow {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 50%, rgba(220, 38, 38, 0.15) 100%);
+            pointer-events: none; z-index: 9999; display: none;
+            animation: alertPulse 1s infinite alternate;
+        }
+        @keyframes alertPulse { from { opacity: 0.3; } to { opacity: 1; } }
+    </style>
+  </head>
+  <body>
+
+    <div id="atm-layer"></div>
+    <div id="scanTooltip" class="scan-tooltip">Region</div>
+
+    <nav class="navbar py-3">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard"><i class="bi bi-shield-plus text-primary"></i> RemediCare</a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                
+                <!-- Reliable Clinical Language Selector -->
+                <div class="clinical-lang-wrapper d-flex align-items-center bg-white rounded-pill px-3 py-1 border shadow-sm">
+                    <i class="bi bi-translate text-primary me-2"></i>
+                    <div id="google_translate_element"></div>
+                </div>
+
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill d-none d-md-block">BIO-SCANNER V5.0 ACTIVE</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        
+        <!-- Phase 1: Environment & Shaders -->
+        <div class="phase active" id="phase1">
+            <div class="text-center mb-5">
+                <h6 class="text-primary fw-bold mb-2" style="letter-spacing: 3px;">PHASE 01: ATMOSPHERIC SYNC</h6>
+                <h1 class="display-4 fw-bold">Environmental Assessment</h1>
+            </div>
+            <div class="weather-bar">
+                {% for w in [('Sunny', 'sun-fill'), ('Rainy', 'cloud-rain-fill'), ('Cold', 'snow'), ('Humid', 'droplet-fill')] %}
+                <div class="weather-node" onclick="projectAtmosphere('{{w[0]}}', this)">
+                    <i class="bi bi-{{w[1]}} fs-1 d-block mb-2"></i>
+                    <h6 class="m-0 fw-bold">{{w[0]}}</h6>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="clinical-panel bg-primary bg-opacity-10 border-0 p-5">
+                <div class="row align-items-center">
+                    <div class="col-md-9">
+                        <h4 class="fw-bold mb-3" id="atmTitle">Sunny Condition</h4>
+                        <p class="fs-5 m-0" id="atmDesc">Solar Intensity detected. High risk of Vata imbalance and skin dehydration. Clinical mapping adjusted for Heat-Arid factors.</p>
+                    </div>
+                    <div class="col-md-3 text-md-end mt-4 mt-md-0">
+                        <button class="btn btn-primary rounded-pill px-5 py-3 fw-bold" onclick="goPhase(2)">Start Scan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 2: 3D Holographic Scanner -->
+        <div class="phase" id="phase2">
+            <div class="clinical-panel">
+                <div class="row g-5">
+                    <div class="col-lg-5 text-center border-end">
+                        <h5 class="fw-bold text-primary mb-4">HOLOGRAPHIC SCANNER</h5>
+                        <div class="scanner-viewport">
+                            <div class="scan-laser"></div>
+                            <div class="human-hologram" id="hologram">
+                                <svg viewBox="0 0 200 500" style="height: 100%; filter: drop-shadow(0 0 10px rgba(0,0,0,0.1));">
+                                    <defs>
+                                        <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#f1f5f9;stop-opacity:1" />
+                                            <stop offset="50%" style="stop-color:#94a3b8;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#475569;stop-opacity:1" />
+                                        </linearGradient>
+                                        <filter id="chromeEffect">
+                                            <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="blur" />
+                                            <feSpecularLighting in="blur" surfaceScale="5" specularConstant="0.75" specularExponent="20" lighting-color="#ffffff" result="specOut">
+                                                <fePointLight x="-5000" y="-10000" z="20000" />
+                                            </feSpecularLighting>
+                                            <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut" />
+                                            <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litPaint" />
+                                        </filter>
+                                    </defs>
+                                    <!-- Metallic Segments -->
+                                    <g filter="url(#chromeEffect)">
+                                        <circle cx="100" cy="50" r="32" class="hotspot" data-name="Cerebral Region" onclick="selectPart('Head', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        
+                                        <!-- Torso Segments -->
+                                        <path d="M70,90 L130,90 L135,130 L65,130 Z" class="hotspot" data-name="Upper Thoracic" onclick="selectPart('Torso', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        <path d="M65,130 L135,130 L138,170 L62,170 Z" class="hotspot" data-name="Lower Thoracic" onclick="selectPart('Torso', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        <path d="M62,170 L138,170 L135,210 L65,210 Z" class="hotspot" data-name="Abdominal Region" onclick="selectPart('Abdomen', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        
+                                        <!-- Arms -->
+                                        <path d="M40,95 L65,95 L60,150 L35,150 Z" class="hotspot" data-name="Upper Extremities" onclick="selectPart('Arms', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        <path d="M35,150 L60,150 L55,220 L30,220 Z" class="hotspot" data-name="Lower Extremities" onclick="selectPart('Arms', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        
+                                        <path d="M135,95 L160,95 L165,150 L140,150 Z" class="hotspot" data-name="Upper Extremities" onclick="selectPart('Arms', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        <path d="M140,150 L165,150 L170,220 L145,220 Z" class="hotspot" data-name="Lower Extremities" onclick="selectPart('Arms', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        
+                                        <!-- Legs -->
+                                        <path d="M75,215 L100,215 L100,330 L70,330 Z" class="hotspot" data-name="Femoral Region" onclick="selectPart('Legs', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        <path d="M70,330 L100,330 L100,470 L75,470 Z" class="hotspot" data-name="Crural Region" onclick="selectPart('Legs', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        
+                                        <path d="M100,215 L125,215 L130,330 L100,330 Z" class="hotspot" data-name="Femoral Region" onclick="selectPart('Legs', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                        <path d="M100,330 L130,330 L125,470 L100,470 Z" class="hotspot" data-name="Crural Region" onclick="selectPart('Legs', this)" style="fill: url(#metalGrad); stroke: #64748b;"/>
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-7">
+                        <h5 class="fw-bold text-primary mb-4">SYMPTOM MAPPING</h5>
+                        <h3 class="fw-bold mb-4" id="pTitle">Identify Region</h3>
+                        <div id="mGrid" style="min-height: 350px;">
+                            <div class="text-center py-5 opacity-25 mt-5">
+                                <i class="bi bi-fingerprint display-1 d-block mb-3"></i>
+                                <p>Extracting neural markers... Select region.</p>
+                            </div>
+                        </div>
+                        <button class="btn-apollo w-100" onclick="goPhase(3)">Next: Neural Load</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 3: Neural Load Calibration -->
+        <div class="phase" id="phase3">
+            <div class="emergency-glow" id="eGlow"></div>
+            <div class="clinical-panel text-center position-relative overflow-hidden" id="p3Panel">
+                <!-- Background Wave Animation -->
+                <div class="biometric-wave"></div>
+                <canvas class="neural-hum" id="humCanvas"></canvas>
+
+                <h5 class="fw-bold text-primary mb-5" style="letter-spacing: 3px;">PHASE 03: NEURAL LOAD CALIBRATION</h5>
+                
+                <div class="row align-items-center justify-content-center g-5 mb-5">
+                    <!-- Left Stat Tile -->
+                    <div class="col-lg-3 d-none d-lg-block">
+                        <div class="stat-glass p-4 rounded-4 border text-start">
+                            <div class="small fw-bold text-muted mb-1">STABILITY INDEX</div>
+                            <div class="h2 fw-bold text-success m-0" id="stabilityIdx">98%</div>
+                            <div class="progress mt-2" style="height: 4px;">
+                                <div class="progress-bar bg-success" id="stabilityBar" style="width: 98%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Center Gauge -->
+                    <div class="col-lg-4">
+                        <div class="gauge-container mx-auto">
+                            <svg viewBox="0 0 100 100" class="gauge-svg">
+                                <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                                <circle class="gauge-fill" id="gFill" cx="50" cy="50" r="45"></circle>
+                            </svg>
+                            <div class="gauge-text">
+                                <div class="display-1 fw-bold mb-0" id="sVal">5</div>
+                                <div class="small fw-bold opacity-50">INTENSITY</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Stat Tile -->
+                    <div class="col-lg-3 d-none d-lg-block">
+                        <div class="stat-glass p-4 rounded-4 border text-start">
+                            <div class="small fw-bold text-muted mb-1">RISK ESCALATION</div>
+                            <div class="h2 fw-bold text-primary m-0" id="riskProb">12%</div>
+                            <div class="progress mt-2" style="height: 4px;">
+                                <div class="progress-bar bg-primary" id="riskBar" style="width: 12%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mx-auto mb-5" style="max-width: 600px;">
+                    <input type="range" class="range-slider" id="sSlider" min="1" max="10" value="5" oninput="updateRisk(this.value)">
+                    <div class="d-flex justify-content-between mt-3 text-muted fw-bold small">
+                        <span>STABLE</span>
+                        <span>MODERATE</span>
+                        <span>CRITICAL</span>
+                    </div>
+                </div>
+
+                <div class="advisor-box shadow-sm mx-auto" id="advBox" style="max-width: 650px; background: #f0fdf4; border-color: #bbf7d0;">
+                    <span class="risk-label" style="color: var(--risk-low);"><i class="bi bi-shield-check"></i> HOME PROTOCOL ACTIVE</span>
+                    <p class="m-0 text-muted" id="advText">Symptoms are mild. You can safely follow the Ayurvedic Home Remedy protocol provided in the final report.</p>
+                </div>
+
+                <button class="btn-apollo mt-5 px-5" onclick="submitDiagnostic()">Finalize Clinical Report</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let selectedSyms = new Set();
+        let curW = 'Sunny';
+        const h = document.getElementById('hologram');
+        const t = document.getElementById('scanTooltip');
+
+        // Atmospheric & 3D Logic
+        document.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth / 2 - e.pageX) / 25;
+            const y = (window.innerHeight / 2 - e.pageY) / 25;
+            h.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
+            t.style.left = (e.pageX + 15) + 'px';
+            t.style.top = (e.pageY + 15) + 'px';
+        });
+
+        document.querySelectorAll('.hotspot').forEach(part => {
+            part.addEventListener('mouseenter', () => { t.innerText = part.dataset.name; t.style.opacity = 1; });
+            part.addEventListener('mouseleave', () => t.style.opacity = 0);
+        });
+
+        function projectAtmosphere(w, el) {
+            curW = w;
+            const atm = document.getElementById('atm-layer');
+            atm.className = '';
+            if(w === 'Rainy') atm.classList.add('rain-mist');
+            if(w === 'Sunny') atm.classList.add('sun-flare');
+            if(w === 'Cold') atm.classList.add('frost-overlay');
+            
+            document.querySelectorAll('.weather-node').forEach(n => n.classList.remove('active'));
+            el.classList.add('active');
+
+            const desc = {
+                'Sunny': 'Solar Intensity detected. High risk of Vata imbalance and skin dehydration. Clinical mapping adjusted for Heat-Arid factors.',
+                'Rainy': 'Moisture escalation. Pitta-Kapha imbalance detected. Respiratory markers prioritize congestion and joint dampness.',
+                'Cold': 'Vascular restriction active. High Vata aggravation. Risk of joint stiffness and reduced circulation mapping.',
+                'Humid': 'Heat-Moisture synergy. Pitta escalation risk. Focusing on blood-purification and digestive cooling markers.'
+            };
+            document.getElementById('atmTitle').innerText = w + ' Condition';
+            document.getElementById('atmDesc').innerText = desc[w];
+        }
+
+        // Neural Hum Logic
+        const canvas = document.getElementById('humCanvas');
+        const ctx = canvas.getContext('2d');
+        let humIntensity = 5;
+
+        function drawHum() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.strokeStyle = humIntensity > 7 ? '#ef4444' : '#00a6e6';
+            ctx.lineWidth = 2;
+            const freq = 0.02 + (humIntensity * 0.01);
+            const amp = 10 + (humIntensity * 3);
+            
+            for (let x = 0; x < canvas.width; x++) {
+                const y = 30 + Math.sin(x * freq + Date.now() * 0.01) * amp * (Math.random() * 0.2 + 0.9);
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            requestAnimationFrame(drawHum);
+        }
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = 60; });
+        canvas.width = window.innerWidth; canvas.height = 60;
+        drawHum();
+
+        // 3D Tilt Logic
+        document.getElementById('p3Panel').addEventListener('mousemove', (e) => {
+            const tiles = document.querySelectorAll('.stat-glass');
+            const x = (window.innerWidth / 2 - e.pageX) / 25;
+            const y = (window.innerHeight / 2 - e.pageY) / 25;
+            tiles.forEach(t => t.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`);
+        });
+
+        function updateRisk(val) {
+            humIntensity = val;
+            const disp = document.getElementById('sVal');
+            const eGlow = document.getElementById('eGlow');
+            const box = document.getElementById('advBox');
+            const lbl = box.querySelector('.risk-label');
+            const txt = document.getElementById('advText');
+            const gFill = document.getElementById('gFill');
+            
+            const stabIdx = document.getElementById('stabilityIdx');
+            const stabBar = document.getElementById('stabilityBar');
+            const riskProb = document.getElementById('riskProb');
+            const riskBar = document.getElementById('riskBar');
+
+            disp.innerText = val;
+            
+            // Animate Gauge (283 is full circumference)
+            const offset = 283 - (val * 28.3);
+            gFill.style.strokeDashoffset = offset;
+
+            // Update Stats
+            const stabValue = 100 - (val * 8);
+            const riskValue = val * 10;
+            stabIdx.innerText = stabValue + "%";
+            stabBar.style.width = stabValue + "%";
+            riskProb.innerText = riskValue + "%";
+            riskBar.style.width = riskValue + "%";
+
+            // Update Emergency Glow
+            if (val >= 8) {
+                eGlow.style.display = 'block';
+            } else {
+                eGlow.style.display = 'none';
+            }
+
+            if (val <= 3) {
+                gFill.style.stroke = 'var(--risk-low)';
+                disp.style.color = 'var(--risk-low)';
+                box.style.background = '#f0fdf4'; box.style.borderColor = '#bbf7d0';
+                lbl.style.color = 'var(--risk-low)';
+                lbl.innerHTML = '<i class="bi bi-shield-check"></i> HOME PROTOCOL ACTIVE';
+                txt.innerText = "Symptoms are mild. You can safely follow the Ayurvedic Home Remedy protocol.";
+            } else if (val <= 7) {
+                gFill.style.stroke = 'var(--risk-med)';
+                disp.style.color = 'var(--risk-med)';
+                box.style.background = '#fffbeb'; box.style.borderColor = '#fde68a';
+                lbl.style.color = 'var(--risk-med)';
+                lbl.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> CLINICAL MONITORING';
+                txt.innerText = "Moderate load detected. Follow the remedy strictly and monitor symptoms for 24 hours.";
+            } else {
+                gFill.style.stroke = 'var(--risk-high)';
+                disp.style.color = 'var(--risk-high)';
+                box.style.background = '#fef2f2'; box.style.borderColor = '#fecaca';
+                lbl.style.color = 'var(--risk-high)';
+                lbl.innerHTML = '<i class="bi bi-shield-exclamation"></i> EMERGENCY: CONSULT DOCTOR';
+                txt.innerText = "HIGH INTENSITY DETECTED. Please consult a medical professional immediately. Action required.";
+            }
+        }
+
+        function goPhase(p) {
+            document.querySelectorAll('.phase').forEach(ph => ph.classList.remove('active'));
+            document.getElementById('phase'+p).classList.add('active');
+        }
+
+        function selectPart(name, el) {
+            document.getElementById('pTitle').innerText = name;
+            document.querySelectorAll('.hotspot').forEach(part => part.classList.remove('active'));
+            el.classList.add('active');
+
+            const mapping = {
+                'Head': ['Headache', 'Dizziness', 'Blurred and Distorted Vision', 'Sinus Pressure'],
+                'Torso': ['Chest Pain', 'Cough', 'Breathlessness', 'Throat Irritation'],
+                'Abdomen': ['Stomach Pain', 'Acidity', 'Vomiting', 'Indigestion'],
+                'Arms': ['Joint Pain', 'Muscle Weakness', 'Movement Stiffness'],
+                'Legs': ['Knee Pain', 'Swollen Legs', 'Painful Walking', 'Swelling Joints']
+            };
+            const grid = document.getElementById('mGrid');
+            grid.innerHTML = (mapping[name] || []).map(s => `
+                <div class="matrix-chip ${selectedSyms.has(s) ? 'active' : ''}" onclick="toggleS('${s}', this)">
+                    ${s}
+                </div>
+            `).join('');
+        }
+
+        function toggleS(s, el) {
+            if(selectedSyms.has(s)) { selectedSyms.delete(s); el.classList.remove('active'); }
+            else { selectedSyms.add(s); el.classList.add('active'); }
+        }
+
+        async function submitDiagnostic() {
+            if(selectedSyms.size === 0) { alert("Please select symptoms."); return; }
+            const r = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    weather: curW,
+                    symptoms: Array.from(selectedSyms),
+                    severity: document.getElementById('sSlider').value
+                })
+            });
+            const d = await r.json();
+            window.location.href = `/result?disease=${encodeURIComponent(d.disease)}&severity=${d.severity}`;
+        }
+    </script>
+
+    <!-- Multilingual Engine Script -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en', 
+                includedLanguages: 'en,hi,mr,te,ta,bn', 
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <style>
+        /* Pro-Clinical Language Styling */
+        .goog-te-gadget-simple {
+            background-color: transparent !important;
+            border: none !important;
+            font-size: 0.85rem !important;
+            font-family: 'Public Sans', sans-serif !important;
+            font-weight: 700 !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        .goog-te-gadget-simple img { display: none !important; }
+        .goog-te-gadget-simple span { color: var(--apollo-blue) !important; }
+        .goog-te-banner-frame.skiptranslate { display: none !important; }
+        body { top: 0px !important; }
+        .goog-te-menu-value span { color: var(--apollo-blue) !important; }
+        .goog-te-menu-value img { display: none !important; }
+        .goog-te-menu-value i { display: none !important; }
+        .goog-te-menu-value::after { content: '\F229'; font-family: 'bootstrap-icons'; margin-left: 8px; font-size: 0.7rem; }
+    </style>
+
+  </body>
+</html>
