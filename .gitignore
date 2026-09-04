@@ -1,0 +1,5 @@
+medicine_system.db.bak
+*.bak
+__pycache__/
+*.pyc
+venv/
